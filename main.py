@@ -183,8 +183,7 @@ class GPUSuddenAppearanceDetector:
             self.logger.info(f"GPU Memory: Used {mem_used / 1024**2:.1f}MB / Total {mem_total / 1024**2:.1f}MB")
             
 
-
-    def process_video(self, video_path: str, display_output: bool = False):
+    def process_video(self, video_path: str, display_output: bool = False, start_time: str = "03:15:00"):
         """Process video with GPU acceleration"""
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
@@ -198,11 +197,22 @@ class GPUSuddenAppearanceDetector:
         self.logger.info(f"FPS: {fps}, Total frames: {frame_count}")
         self.logger.info(f"GPU acceleration: {'enabled' if self.use_gpu else 'disabled'}")
         
+        # Convert start_time to total seconds and then to frame number
+        hours, minutes, seconds = map(int, start_time.split(':'))
+        start_frame = int((hours * 3600 + minutes * 60 + seconds) * fps)
+        
+        # Skip frames until reaching the starting frame
+        for _ in range(start_frame):
+            ret = cap.grab()  # Grabs the next frame without decoding it
+            if not ret:
+                self.logger.warning("Reached end of video before start time.")
+                return
+
         try:
             if self.use_gpu:
                 with cp.cuda.Stream() as stream:
                     self.print_gpu_memory_usage()
-                    frame_number = 0
+                    frame_number = start_frame  # Start from the specified frame
                     
                     while True:
                         batch_frames = []
@@ -247,10 +257,11 @@ class GPUSuddenAppearanceDetector:
                             frame_number += len(batch_frames)
 
                             # Log progress every 100 frames
-                            print('frame number',frame_number)
-                            if frame_number % 100 == 0:
+                                # print("frame number: ",frame_number)
+                            if (frame_number - start_frame) % 100 == 0:
                                 progress = (frame_number / frame_count) * 100
                                 self.logger.info(f"Progress: {progress:.1f}%")
+
                                 
                                 # Calculate and log current video timestamp
                                 current_time = frame_number / fps
@@ -260,16 +271,10 @@ class GPUSuddenAppearanceDetector:
                         except Exception as e:
                             self.logger.error(f"Error processing batch: {str(e)}")
                             continue
-    
-                        frame_number += len(batch_frames)
-                        
-                        if frame_number % 100 == 0:
-                            progress = (frame_number / frame_count) * 100
-                            self.logger.info(f"Progress: {progress:.1f}%")
-                            self.print_gpu_memory_usage()
+            
             else:
                 # CPU fallback processing
-                frame_number = 0
+                frame_number = start_frame  # Start from the specified frame
                 prev_frame = None
                 
                 while True:
@@ -282,7 +287,6 @@ class GPUSuddenAppearanceDetector:
                     # Calculate and log the current time in the video
                     current_time = frame_number / fps
                     self.logger.info(f"Current video time: {datetime.timedelta(seconds=current_time)} (Frame {frame_number})")
-                    
                     
                     if prev_frame is not None:
                         # Compute difference
@@ -357,6 +361,7 @@ class GPUSuddenAppearanceDetector:
             
             self.logger.info("Video processing completed")
 
+
 def main():
     # Create detector instance
     detector = GPUSuddenAppearanceDetector(
@@ -372,6 +377,7 @@ def main():
     video_path = "v1.mp4"  # Replace with your video path
     detector.process_video(
         video_path,
+        start_time="03:15:00",
         display_output=True  # Set to False for headless operation
     )
 

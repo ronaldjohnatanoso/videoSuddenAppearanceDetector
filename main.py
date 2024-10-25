@@ -240,19 +240,20 @@ class GPUSuddenAppearanceDetector:
                                     event.timestamp = event.frame_number / fps
                                     self.save_detection(batch_frames[i], event, fps)
 
-                                    if display_output:
-                                        frame = batch_frames[i].copy()
-                                        x, y, w, h = event.bbox
-                                        cv2.rectangle(
-                                            frame,
-                                            (x, y),
-                                            (x + w, y + h),
-                                            (0, 255, 0),
-                                            2
-                                        )
-                                        cv2.imshow('Detection', frame)
-                                        if cv2.waitKey(1) & 0xFF == ord('q'):
-                                            return
+                                    #WINDOW POPUP SHOW
+                                    # if display_output:
+                                    #     frame = batch_frames[i].copy()
+                                    #     x, y, w, h = event.bbox
+                                    #     cv2.rectangle(
+                                    #         frame,
+                                    #         (x, y),
+                                    #         (x + w, y + h),
+                                    #         (0, 255, 0),
+                                    #         2
+                                    #     )
+                                    #     cv2.imshow('Detection', frame)
+                                    #     if cv2.waitKey(1) & 0xFF == ord('q'):
+                                    #         return
 
                             frame_number += len(batch_frames)
 
@@ -377,7 +378,7 @@ def main():
     video_path = "v1.mp4"  # Replace with your video path
     detector.process_video(
         video_path,
-        start_time="03:15:00",
+        start_time="08:10:00",
         display_output=True  # Set to False for headless operation
     )
 

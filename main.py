@@ -247,6 +247,7 @@ class GPUSuddenAppearanceDetector:
                             frame_number += len(batch_frames)
 
                             # Log progress every 100 frames
+                            print('frame number',frame_number)
                             if frame_number % 100 == 0:
                                 progress = (frame_number / frame_count) * 100
                                 self.logger.info(f"Progress: {progress:.1f}%")
